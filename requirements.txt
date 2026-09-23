@@ -1,0 +1,19 @@
+# Post-Quantum Cryptography (NIST FIPS 203 & 204)
+kyber-py>=1.2.0
+dilithium-py>=1.4.0
+
+# Symmetric AEAD & Classical Crypto
+cryptography>=43.0.0
+pycryptodome>=3.20.0
+
+# Multi-Domain Signal Processing & Forensics
+numpy>=1.26.0
+scipy>=1.12.0
+pywavelets>=1.6.0
+opencv-python>=4.9.0
+pillow>=10.0.0
+
+# Web Framework & API Server
+fastapi>=0.110.0
+uvicorn>=0.28.0
+pydantic>=2.6.0
