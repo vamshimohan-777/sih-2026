@@ -30,43 +30,25 @@ function StepItem({ step, active }) {
 export default function DecryptPanel({ initialDocId }) {
   const { user } = useAuth();
   const [packages, setPackages] = useState([]);
-  const [users, setUsers] = useState([]);    // for ADMIN: recipient picker
   const [packageId, setPackageId] = useState('');
-  const [recipientId, setRecipientId] = useState('');
   const [status, setStatus] = useState('IDLE'); // IDLE | PROCESSING | SUCCESS | ERROR
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
   const [currentStep, setCurrentStep] = useState(0);
 
-  const isAdminOrSuper = user.role === 'ADMIN' || user.role === 'SUPERADMIN';
-
   useEffect(() => {
-    // Load packages available to this user
-    const loadPkgs = isAdminOrSuper ? api.getPackages() : api.getDecryptedInstances();
-
-    Promise.all([
-      api.getPackages().catch(() => []),
-      isAdminOrSuper ? api.getAdminUsers().catch(() => []) : Promise.resolve([]),
-    ]).then(([pkgs, userList]) => {
-      setPackages(pkgs || []);
-      setUsers((userList || []).filter(u => u.role === 'USER'));
-      // Default recipient = self for USER role
-      if (!isAdminOrSuper) {
-        setRecipientId(user.id);
-      }
-    });
+    // All roles: load all packages (user sees theirs via envelope check at decrypt time)
+    api.getPackages().catch(() => []).then(pkgs => setPackages(pkgs || []));
   }, []);
 
   const handleDecrypt = async () => {
     if (!packageId) { setError('Select a package to decrypt'); return; }
-    if (!recipientId && isAdminOrSuper) { setError('Select a recipient'); return; }
 
     setStatus('PROCESSING');
     setError('');
     setCurrentStep(0);
     setResult(null);
 
-    // Animate steps while waiting
     const stepTimer = setInterval(() => {
       setCurrentStep(s => Math.min(s + 1, 5));
     }, 800);
@@ -74,7 +56,7 @@ export default function DecryptPanel({ initialDocId }) {
     try {
       const res = await api.decrypt({
         package_id: packageId,
-        recipient_id: recipientId || user.id,
+        recipient_id: user.id,   // always the logged-in user
       });
       clearInterval(stepTimer);
       setCurrentStep(6);
@@ -121,6 +103,13 @@ export default function DecryptPanel({ initialDocId }) {
           <div className="aegis-panel p-6 space-y-4">
             <h3 className="text-sm font-mono text-teal-400 uppercase tracking-wider">Initiate Decryption</h3>
 
+            {/* Logged-in user identity — read only */}
+            <div className="bg-[#0a0f1e] border border-[#1e3a5f] rounded px-3 py-2 flex items-center gap-2">
+              <span className="text-xs text-slate-500 font-mono">DECRYPTING AS:</span>
+              <span className="text-sm text-teal-300 font-mono font-bold">{user.username}</span>
+              <span className="ml-auto text-[10px] px-1.5 py-0.5 bg-teal-500/10 border border-teal-500/30 text-teal-400 rounded font-mono">{user.role}</span>
+            </div>
+
             {error && (
               <div className="bg-red-500/10 border border-red-500/30 text-red-400 text-sm px-3 py-2 rounded">
                 {error}
@@ -132,7 +121,7 @@ export default function DecryptPanel({ initialDocId }) {
               <label className="block text-xs text-slate-400 mb-1">Encrypted Package</label>
               {packages.length === 0 ? (
                 <p className="text-slate-500 text-sm font-mono">
-                  No packages available. {isAdminOrSuper ? 'Distribute a document first.' : 'You have not been enrolled in any package yet.'}
+                  No packages available. You have not been enrolled in any package yet.
                 </p>
               ) : (
                 <select
@@ -150,38 +139,9 @@ export default function DecryptPanel({ initialDocId }) {
               )}
             </div>
 
-            {/* Recipient selector — ADMIN/SUPERADMIN only */}
-            {isAdminOrSuper && (
-              <div>
-                <label className="block text-xs text-slate-400 mb-1">Recipient (decrypt as)</label>
-                <select
-                  value={recipientId}
-                  onChange={e => setRecipientId(e.target.value)}
-                  className="w-full bg-[#0a0f1e] border border-[#1e3a5f] rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-teal-500 font-mono"
-                >
-                  <option value="">— Select recipient —</option>
-                  {users.map(u => (
-                    <option key={u.id} value={u.id}>
-                      {u.username} {u.has_pqc_keys ? '(PQC ready)' : '(no keys)'}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
-
-            {/* USER sees their own ID */}
-            {!isAdminOrSuper && (
-              <div>
-                <label className="block text-xs text-slate-400 mb-1">Your Identity</label>
-                <div className="bg-[#0a0f1e] border border-[#1e3a5f] rounded px-3 py-2 text-sm text-teal-300 font-mono">
-                  {user.username} · {user.id}
-                </div>
-              </div>
-            )}
-
             <button
               onClick={handleDecrypt}
-              disabled={!packageId || (isAdminOrSuper && !recipientId) || packages.length === 0}
+              disabled={!packageId || packages.length === 0}
               className="w-full bg-teal-600 hover:bg-teal-500 disabled:opacity-40 text-white py-3 rounded font-bold tracking-wide transition-colors"
             >
               INITIATE DECRYPTION SEQUENCE

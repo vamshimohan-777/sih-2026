@@ -14,9 +14,8 @@ import PqcBenchmark from './PqcBenchmark';
 const NAV = [
   { id: 'dashboard',  label: 'Dashboard',      icon: '⬡', roles: ['USER', 'ADMIN', 'SUPERADMIN'] },
   { id: 'documents',  label: 'Documents',       icon: '📄', roles: ['USER', 'ADMIN', 'SUPERADMIN'] },
-  { id: 'distribute', label: 'Distribution',    icon: '🔐', roles: ['ADMIN', 'SUPERADMIN'] },
   { id: 'decrypt',    label: 'Decrypt & Verify',icon: '🔓', roles: ['USER', 'ADMIN', 'SUPERADMIN'] },
-  { id: 'sessions',   label: 'Sessions',        icon: '📋', roles: ['USER', 'ADMIN', 'SUPERADMIN'] },
+  { id: 'sessions',   label: 'Sessions',        icon: '📋', roles: ['SUPERADMIN'] },
   { id: 'forensics',  label: 'Forensic Lab',    icon: '🔬', roles: ['ADMIN', 'SUPERADMIN'] },
   { id: 'ledger',     label: 'Ledger Explorer', icon: '⛓', roles: ['ADMIN', 'SUPERADMIN'] },
   { id: 'benchmark',  label: 'PQC Benchmark',   icon: '📊', roles: ['USER', 'ADMIN', 'SUPERADMIN'] },
@@ -41,7 +40,6 @@ export default function Layout() {
     switch (currentTab) {
       case 'dashboard':  return <Dashboard onNavigate={onNavigate} />;
       case 'documents':  return <DocumentsPanel onNavigate={onNavigate} />;
-      case 'distribute': return <DistributionWizard onNavigate={onNavigate} initialDocId={navState.doc_id} />;
       case 'decrypt':    return <DecryptPanel onNavigate={onNavigate} initialDocId={navState.doc_id} />;
       case 'sessions':   return <SessionsPanel onNavigate={onNavigate} />;
       case 'forensics':  return <ForensicLab onNavigate={onNavigate} />;

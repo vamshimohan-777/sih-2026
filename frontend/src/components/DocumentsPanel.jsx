@@ -128,9 +128,9 @@ function DistributeModal({ doc, onClose, onSuccess }) {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    api.getAdminUsers()
+    api.getRecipients()
       .then(data => {
-        setUsers(data.filter(u => u.role === 'USER'));
+        setUsers(data || []);
         setLoading(false);
       })
       .catch(() => setLoading(false));

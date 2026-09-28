@@ -51,6 +51,7 @@ export const api = {
     request('/distribute', { method: 'POST', body: JSON.stringify(data) }),
   getPackages: () => request('/packages'),
   getPackage: (id) => request(`/packages/${id}`),
+  getRecipients: () => request('/recipients'),
 
   // Packages with envelope details (recipient list per package)
   getPackagesWithRecipients: async () => {

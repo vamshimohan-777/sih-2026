@@ -63,17 +63,18 @@ export default function SessionsPanel() {
   const [activeTab, setActiveTab] = useState('decryptions'); // 'decryptions' | 'distributions'
 
   useEffect(() => {
+    const isAdminOrSuper = user.role === 'ADMIN' || user.role === 'SUPERADMIN';
+
     Promise.all([
       api.getDecryptedInstances(),
       api.getDocuments(),
-      user.role !== 'USER' ? api.getPackagesWithRecipients() : Promise.resolve([]),
-      user.role !== 'USER' ? api.getAdminUsers() : Promise.resolve([]),
+      isAdminOrSuper ? api.getPackagesWithRecipients() : Promise.resolve([]),
+      isAdminOrSuper ? api.getRecipients() : Promise.resolve([]),
     ])
       .then(([sessions, docList, pkgs, userList]) => {
         setSessions(sessions || []);
         setPackages(pkgs || []);
 
-        // Build lookup maps
         const docMap = {};
         (docList || []).forEach(d => { docMap[d.id] = d.title; });
         setDocs(docMap);
