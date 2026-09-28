@@ -21,7 +21,7 @@ from backend.app.database import engine, Base, SessionLocal, User, Document
 from backend.app.auth import hash_password
 from backend.app.storage_adapter import storage_adapter
 from backend.app.routers.auth_router import router as auth_router
-from backend.app.routers.documents_router import router as docs_router
+from backend.app.routers.documents_router import router as docs_router, recipients_router
 from backend.app.routers.distribution_router import router as dist_router
 from backend.app.routers.decryption_router import router as dec_router
 from backend.app.routers.forensics_router import router as for_router
@@ -46,6 +46,7 @@ app.add_middleware(
 
 app.include_router(auth_router)
 app.include_router(docs_router)
+app.include_router(recipients_router)
 app.include_router(dist_router)
 app.include_router(dec_router)
 app.include_router(for_router)

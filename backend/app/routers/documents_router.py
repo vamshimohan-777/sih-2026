@@ -1,6 +1,6 @@
 import uuid
 import datetime
-from fastapi import APIRouter, Depends, HTTPException, Body
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from typing import List, Optional
@@ -9,6 +9,8 @@ from backend.app.auth import get_current_user, require_role
 from backend.app.audit import log_action
 
 router = APIRouter(prefix="/api/documents", tags=["documents"])
+recipients_router = APIRouter(prefix="/api", tags=["recipients"])
+
 
 class DocumentResponse(BaseModel):
     id: str
@@ -18,33 +20,34 @@ class DocumentResponse(BaseModel):
     created_at: datetime.datetime
     created_by: str
 
+
 class DocumentCreate(BaseModel):
     title: str
     classification: str
-    description: str
+    description: str = ""
     image_b64: str
+
 
 @router.get("", response_model=List[DocumentResponse])
 def list_documents(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    # All users can see the list of documents
     docs = db.query(Document).all()
     return [
         DocumentResponse(
             id=d.id,
             title=d.title,
             classification=d.classification,
-            description=d.description,
+            description=d.description or "",
             created_at=d.created_at,
             created_by=d.created_by
         ) for d in docs
     ]
+
 
 @router.get("/{doc_id}")
 def get_document(doc_id: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     doc = db.query(Document).filter(Document.id == doc_id).first()
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found")
-    
     return {
         "id": doc.id,
         "title": doc.title,
@@ -54,6 +57,7 @@ def get_document(doc_id: str, db: Session = Depends(get_db), current_user: User 
         "created_at": doc.created_at,
         "created_by": doc.created_by
     }
+
 
 @router.post("", response_model=DocumentResponse)
 def create_document(
@@ -73,14 +77,33 @@ def create_document(
     db.add(new_doc)
     db.commit()
     db.refresh(new_doc)
-    
-    log_action(db, "DOCUMENT_CREATED", current_user.id, "Document", new_doc.id, f"Created document: {new_doc.title}")
-    
+    log_action(db, "DOCUMENT_CREATED", current_user.id, "Document", new_doc.id,
+               f"Created: {new_doc.title} [{new_doc.classification}]")
     return DocumentResponse(
         id=new_doc.id,
         title=new_doc.title,
         classification=new_doc.classification,
-        description=new_doc.description,
+        description=new_doc.description or "",
         created_at=new_doc.created_at,
         created_by=new_doc.created_by
     )
+
+
+# ── Recipients endpoint (separate router, mounted at /api) ────────────────────
+@recipients_router.get("/recipients")
+def list_recipients(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_role("ADMIN", "SUPERADMIN"))
+):
+    """Returns all active USER-role accounts with PQC key status — for distribution UI."""
+    users = db.query(User).filter(User.role == "USER", User.is_active == True).all()
+    return [
+        {
+            "id": u.id,
+            "username": u.username,
+            "role": u.role,
+            "has_pqc_keys": bool(u.kem_public_key_hex),
+            "is_active": u.is_active,
+        }
+        for u in users
+    ]
