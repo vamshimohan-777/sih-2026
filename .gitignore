@@ -21,3 +21,8 @@ Thumbs.db
 .vscode/
 .idea/
 *.local
+
+# AEGIS-PQC security — never commit private keys or local DB
+storage/keys/
+aegis.db
+*.db
