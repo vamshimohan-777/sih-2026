@@ -169,9 +169,21 @@ def distribute_document(
 @router.get("/packages")
 def list_packages(
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_role("ADMIN", "SUPERADMIN"))
+    current_user: User = Depends(get_current_user)
 ):
-    packages = db.query(EncryptedPackage).all()
+    """All roles can call this. USERs see only packages they are enrolled in."""
+    if current_user.role in ("ADMIN", "SUPERADMIN"):
+        packages = db.query(EncryptedPackage).all()
+    else:
+        # Only return packages where a RecipientEnvelope exists for this user
+        envelopes = db.query(RecipientEnvelope).filter(
+            RecipientEnvelope.recipient_id == current_user.id
+        ).all()
+        pkg_ids = {e.package_id for e in envelopes}
+        packages = db.query(EncryptedPackage).filter(
+            EncryptedPackage.id.in_(pkg_ids)
+        ).all()
+
     return [
         {
             "id": p.id,
@@ -187,13 +199,24 @@ def list_packages(
 def get_package(
     package_id: str,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_role("ADMIN", "SUPERADMIN"))
+    current_user: User = Depends(get_current_user)
 ):
     pkg = db.query(EncryptedPackage).filter(EncryptedPackage.id == package_id).first()
     if not pkg:
         raise HTTPException(status_code=404, detail="Package not found")
 
-    envelopes = db.query(RecipientEnvelope).filter(RecipientEnvelope.package_id == package_id).all()
+    # USERs can only see packages they are enrolled in
+    if current_user.role == "USER":
+        env = db.query(RecipientEnvelope).filter(
+            RecipientEnvelope.package_id == package_id,
+            RecipientEnvelope.recipient_id == current_user.id
+        ).first()
+        if not env:
+            raise HTTPException(status_code=403, detail="Not enrolled in this package")
+
+    envelopes = db.query(RecipientEnvelope).filter(
+        RecipientEnvelope.package_id == package_id
+    ).all()
     return {
         "id": pkg.id,
         "doc_id": pkg.doc_id,

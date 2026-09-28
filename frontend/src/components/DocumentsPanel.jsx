@@ -28,7 +28,6 @@ function UploadModal({ onClose, onSuccess }) {
     setLoading(true);
     setError('');
     try {
-      // Convert file to base64
       const b64 = preview.split(',')[1];
       await api.createDocument({ title, classification, description, image_b64: b64 });
       onSuccess();
@@ -53,20 +52,13 @@ function UploadModal({ onClose, onSuccess }) {
         <div className="space-y-3">
           <div>
             <label className="block text-xs text-slate-400 mb-1">Document Title *</label>
-            <input
-              value={title}
-              onChange={e => setTitle(e.target.value)}
-              placeholder="e.g. Operation Alpha Specs"
-              className="w-full bg-[#0a0f1e] border border-[#1e3a5f] rounded px-3 py-2 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-teal-500"
-            />
+            <input value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g. Operation Alpha Specs"
+              className="w-full bg-[#0a0f1e] border border-[#1e3a5f] rounded px-3 py-2 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-teal-500" />
           </div>
           <div>
             <label className="block text-xs text-slate-400 mb-1">Classification *</label>
-            <select
-              value={classification}
-              onChange={e => setClassification(e.target.value)}
-              className="w-full bg-[#0a0f1e] border border-[#1e3a5f] rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-teal-500"
-            >
+            <select value={classification} onChange={e => setClassification(e.target.value)}
+              className="w-full bg-[#0a0f1e] border border-[#1e3a5f] rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-teal-500">
               <option value="TOP SECRET">TOP SECRET</option>
               <option value="SECRET">SECRET</option>
               <option value="CONFIDENTIAL">CONFIDENTIAL</option>
@@ -74,46 +66,112 @@ function UploadModal({ onClose, onSuccess }) {
           </div>
           <div>
             <label className="block text-xs text-slate-400 mb-1">Description</label>
-            <textarea
-              value={description}
-              onChange={e => setDescription(e.target.value)}
-              rows={2}
+            <textarea value={description} onChange={e => setDescription(e.target.value)} rows={2}
               placeholder="Brief description of document contents"
-              className="w-full bg-[#0a0f1e] border border-[#1e3a5f] rounded px-3 py-2 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-teal-500 resize-none"
-            />
+              className="w-full bg-[#0a0f1e] border border-[#1e3a5f] rounded px-3 py-2 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-teal-500 resize-none" />
           </div>
           <div>
             <label className="block text-xs text-slate-400 mb-1">Document Image *</label>
-            <div
-              onClick={() => fileRef.current.click()}
-              className="border-2 border-dashed border-[#1e3a5f] rounded-lg p-4 text-center cursor-pointer hover:border-teal-500 transition-colors"
-            >
-              {preview ? (
-                <img src={preview} alt="preview" className="h-32 mx-auto object-contain rounded" />
-              ) : (
-                <p className="text-slate-500 text-sm">Click to select image (PNG/JPG)</p>
-              )}
+            <div onClick={() => fileRef.current.click()}
+              className="border-2 border-dashed border-[#1e3a5f] rounded-lg p-4 text-center cursor-pointer hover:border-teal-500 transition-colors">
+              {preview
+                ? <img src={preview} alt="preview" className="h-32 mx-auto object-contain rounded" />
+                : <p className="text-slate-500 text-sm">Click to select image (PNG/JPG)</p>}
             </div>
             <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFile} />
           </div>
         </div>
 
         <div className="flex gap-3 pt-2">
-          <button
-            onClick={onClose}
-            className="flex-1 border border-[#1e3a5f] text-slate-400 hover:text-white py-2 rounded text-sm transition-colors"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handleSubmit}
-            disabled={loading}
-            className="flex-1 bg-teal-600 hover:bg-teal-500 text-white py-2 rounded text-sm font-semibold transition-colors disabled:opacity-50"
-          >
+          <button onClick={onClose} className="flex-1 border border-[#1e3a5f] text-slate-400 hover:text-white py-2 rounded text-sm transition-colors">Cancel</button>
+          <button onClick={handleSubmit} disabled={loading}
+            className="flex-1 bg-teal-600 hover:bg-teal-500 text-white py-2 rounded text-sm font-semibold transition-colors disabled:opacity-50">
             {loading ? 'Uploading...' : 'Upload & Encrypt'}
           </button>
         </div>
       </div>
+    </div>
+  );
+}
+
+// ─── Animated Distribution Result ──────────────────────────────────────────
+function DistributeResult({ result, onClose }) {
+  const [visibleSteps, setVisibleSteps] = useState([]);
+  const [done, setDone] = useState(false);
+  const steps = result.crypto_steps || [];
+
+  useEffect(() => {
+    let i = 0;
+    const reveal = () => {
+      if (i < steps.length) {
+        setVisibleSteps(prev => [...prev, steps[i]]);
+        i++;
+        setTimeout(reveal, 420);
+      } else {
+        setDone(true);
+      }
+    };
+    const t = setTimeout(reveal, 150);
+    return () => clearTimeout(t);
+  }, []);
+
+  return (
+    <div className="space-y-4">
+      {/* Header */}
+      <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-4">
+        <div className="flex items-center gap-2 mb-2">
+          <span className="text-green-400 text-lg">✓</span>
+          <p className="text-green-400 font-bold text-sm">DISTRIBUTION COMPLETE</p>
+        </div>
+        <div className="grid grid-cols-2 gap-x-4 gap-y-1 font-mono text-xs mt-2">
+          <span className="text-slate-500">PACKAGE ID</span>
+          <span className="text-white">{result.package_id}</span>
+          <span className="text-slate-500">DOCUMENT</span>
+          <span className="text-teal-300 truncate">{result.doc_title || result.doc_id}</span>
+          <span className="text-slate-500">RECIPIENTS</span>
+          <span className="text-white">{result.recipient_count}</span>
+          <span className="text-slate-500">PAYLOAD</span>
+          <span className="text-white">{result.distribution_summary?.ciphertext_size_bytes} bytes</span>
+          <span className="text-slate-500">PROC TIME</span>
+          <span className="text-white">{result.distribution_summary?.processing_time_ms} ms</span>
+        </div>
+      </div>
+
+      {/* Animated terminal log */}
+      <div>
+        <p className="text-xs text-slate-500 font-mono uppercase mb-2">Cryptographic Execution Log</p>
+        <div className="bg-[#05080f] border border-[#1e3a5f] rounded-lg p-3 space-y-2 max-h-52 overflow-y-auto font-mono text-xs">
+          {visibleSteps.map((step, i) => (
+            <div key={i} className="space-y-0.5 animate-[fadeIn_0.3s_ease-in]">
+              <div className="flex items-center gap-2">
+                <span className="text-slate-600">[{String(step.step).padStart(2, '0')}]</span>
+                <span className="text-teal-400 font-semibold">{step.title}</span>
+              </div>
+              <div className="pl-8 text-slate-500">{step.tech}</div>
+              {step.output_preview && (
+                <div className="pl-8 text-green-400/80 break-all">&gt; {step.output_preview}</div>
+              )}
+            </div>
+          ))}
+          {!done && (
+            <div className="flex items-center gap-1 text-teal-500">
+              <span className="animate-pulse">▋</span>
+              <span className="text-slate-600">processing...</span>
+            </div>
+          )}
+          {done && (
+            <div className="text-green-400 mt-1">
+              ✓ All cryptographic operations complete. Package committed to DB.
+            </div>
+          )}
+        </div>
+      </div>
+
+      {done && (
+        <button onClick={onClose} className="w-full bg-teal-600 hover:bg-teal-500 text-white py-2 rounded text-sm font-semibold transition-colors">
+          Done
+        </button>
+      )}
     </div>
   );
 }
@@ -129,10 +187,7 @@ function DistributeModal({ doc, onClose, onSuccess }) {
 
   useEffect(() => {
     api.getRecipients()
-      .then(data => {
-        setUsers(data || []);
-        setLoading(false);
-      })
+      .then(data => { setUsers(data || []); setLoading(false); })
       .catch(() => setLoading(false));
   }, []);
 
@@ -167,58 +222,56 @@ function DistributeModal({ doc, onClose, onSuccess }) {
         {error && <div className="bg-red-500/10 border border-red-500/30 text-red-400 text-sm px-3 py-2 rounded">{error}</div>}
 
         {result ? (
-          <div className="space-y-3">
-            <div className="bg-green-500/10 border border-green-500/30 rounded p-4">
-              <p className="text-green-400 font-bold mb-1">DISTRIBUTION COMPLETE</p>
-              <p className="font-mono text-xs text-slate-300">Package: {result.package_id}</p>
-              <p className="font-mono text-xs text-slate-300">Recipients: {result.recipient_count}</p>
-              <p className="font-mono text-xs text-slate-300">Encryption: ML-KEM-768 + AES-256-GCM</p>
-            </div>
-            <div className="space-y-1 max-h-40 overflow-y-auto">
-              {(result.crypto_steps || []).map((step, i) => (
-                <div key={i} className="text-xs font-mono text-teal-300 bg-[#0a0f1e] rounded px-2 py-1">
-                  <span className="text-slate-500">Step {step.step}:</span> {step.title}
-                </div>
-              ))}
-            </div>
-            <button onClick={onClose} className="w-full bg-teal-600 hover:bg-teal-500 text-white py-2 rounded text-sm font-semibold">
-              Done
-            </button>
-          </div>
+          <DistributeResult result={result} onClose={onClose} />
         ) : (
           <>
-            <p className="text-sm text-slate-400">Select recipients. Each will receive their own ML-KEM-768 encrypted envelope.</p>
+            <p className="text-sm text-slate-400">
+              Select recipients. Each will receive their own <span className="text-teal-400 font-mono">ML-KEM-768</span> encrypted envelope.
+            </p>
             {loading ? (
               <p className="text-teal-400 font-mono animate-pulse text-sm">Loading users...</p>
             ) : (
               <div className="space-y-2 max-h-60 overflow-y-auto">
-                {users.length === 0 && <p className="text-slate-500 text-sm">No USER-role recipients found.</p>}
+                {users.length === 0 && (
+                  <p className="text-slate-500 text-sm">No USER-role recipients with PQC keys found.</p>
+                )}
                 {users.map(u => (
-                  <label key={u.id} className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${selected.includes(u.id) ? 'border-teal-500 bg-teal-500/10' : 'border-[#1e3a5f] hover:border-teal-500/50'}`}>
-                    <input
-                      type="checkbox"
-                      checked={selected.includes(u.id)}
-                      onChange={() => toggle(u.id)}
-                      className="accent-teal-500"
-                    />
+                  <label key={u.id}
+                    className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+                      selected.includes(u.id) ? 'border-teal-500 bg-teal-500/10' : 'border-[#1e3a5f] hover:border-teal-500/50'
+                    }`}>
+                    <input type="checkbox" checked={selected.includes(u.id)} onChange={() => toggle(u.id)} className="accent-teal-500" />
                     <div>
                       <p className="text-sm font-semibold text-white">{u.username}</p>
-                      <p className="text-xs text-slate-500 font-mono">{u.id.slice(0, 16)}... · {u.has_pqc_keys ? '🔑 PQC Keys Ready' : '⚠ No PQC Keys'}</p>
+                      <p className="text-xs text-slate-500 font-mono">
+                        {u.id.slice(0, 16)}... · {u.has_pqc_keys ? '🔑 PQC Keys Ready' : '⚠ No PQC Keys'}
+                      </p>
                     </div>
                   </label>
                 ))}
               </div>
             )}
+
+            {/* Distributing spinner */}
+            {distributing && (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-teal-400 font-mono text-sm">
+                  <div className="w-4 h-4 border-2 border-teal-500 border-t-transparent rounded-full animate-spin" />
+                  <span className="animate-pulse">Encrypting & distributing...</span>
+                </div>
+                <div className="h-1 bg-[#0a0f1e] rounded overflow-hidden">
+                  <div className="h-full bg-teal-500 animate-[slide-in_1s_ease-in-out_infinite_alternate] w-1/2 rounded" />
+                </div>
+              </div>
+            )}
+
             <div className="flex gap-3 pt-2">
               <button onClick={onClose} className="flex-1 border border-[#1e3a5f] text-slate-400 hover:text-white py-2 rounded text-sm transition-colors">
                 Cancel
               </button>
-              <button
-                onClick={handleDistribute}
-                disabled={distributing || selected.length === 0}
-                className="flex-1 bg-teal-600 hover:bg-teal-500 text-white py-2 rounded text-sm font-semibold disabled:opacity-50 transition-colors"
-              >
-                {distributing ? 'Encrypting & Distributing...' : `Distribute to ${selected.length} Recipient${selected.length !== 1 ? 's' : ''}`}
+              <button onClick={handleDistribute} disabled={distributing || selected.length === 0}
+                className="flex-1 bg-teal-600 hover:bg-teal-500 text-white py-2 rounded text-sm font-semibold disabled:opacity-50 transition-colors">
+                {distributing ? 'Encrypting...' : `Distribute to ${selected.length} Recipient${selected.length !== 1 ? 's' : ''}`}
               </button>
             </div>
           </>
@@ -248,7 +301,7 @@ export default function DocumentsPanel({ onNavigate }) {
 
   const getClassColor = (c) => {
     if (c?.includes('TOP')) return 'bg-red-500/20 text-red-400 border-red-500/50';
-    if (c?.includes('SECRET') || c === 'SECRET') return 'bg-orange-500/20 text-orange-400 border-orange-500/50';
+    if (c === 'SECRET') return 'bg-orange-500/20 text-orange-400 border-orange-500/50';
     if (c?.includes('CONF')) return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/50';
     return 'bg-blue-500/20 text-blue-400 border-blue-500/50';
   };
@@ -257,19 +310,8 @@ export default function DocumentsPanel({ onNavigate }) {
 
   return (
     <div className="space-y-6">
-      {showUpload && (
-        <UploadModal
-          onClose={() => setShowUpload(false)}
-          onSuccess={loadDocs}
-        />
-      )}
-      {distributeDoc && (
-        <DistributeModal
-          doc={distributeDoc}
-          onClose={() => setDistributeDoc(null)}
-          onSuccess={() => {}}
-        />
-      )}
+      {showUpload && <UploadModal onClose={() => setShowUpload(false)} onSuccess={loadDocs} />}
+      {distributeDoc && <DistributeModal doc={distributeDoc} onClose={() => setDistributeDoc(null)} onSuccess={() => {}} />}
 
       <div className="flex justify-between items-center mb-6">
         <div>
@@ -277,18 +319,14 @@ export default function DocumentsPanel({ onNavigate }) {
           <p className="text-sm text-slate-500 font-mono mt-0.5">{documents.length} classified assets</p>
         </div>
         {isAdminOrSuper && (
-          <button
-            onClick={() => setShowUpload(true)}
-            className="bg-teal-600 hover:bg-teal-500 text-white px-4 py-2 rounded text-sm font-semibold transition-colors flex items-center gap-2"
-          >
+          <button onClick={() => setShowUpload(true)}
+            className="bg-teal-600 hover:bg-teal-500 text-white px-4 py-2 rounded text-sm font-semibold transition-colors flex items-center gap-2">
             <span className="text-lg leading-none">+</span> UPLOAD NEW
           </button>
         )}
       </div>
 
-      {error && (
-        <div className="bg-red-500/10 border border-red-500/30 text-red-400 text-sm px-3 py-2 rounded">{error}</div>
-      )}
+      {error && <div className="bg-red-500/10 border border-red-500/30 text-red-400 text-sm px-3 py-2 rounded">{error}</div>}
 
       {loading ? (
         <div className="text-teal-400 font-mono animate-pulse">Scanning repository...</div>
@@ -321,19 +359,14 @@ export default function DocumentsPanel({ onNavigate }) {
                     {doc.created_at ? new Date(doc.created_at).toLocaleDateString() : '—'}
                   </span>
                   <div className="flex gap-2">
-                    {/* DECRYPT button — all roles */}
                     <button
                       onClick={() => onNavigate && onNavigate('decrypt', { doc_id: doc.id })}
-                      className="text-xs bg-blue-600/20 hover:bg-blue-600/40 text-blue-300 border border-blue-500/30 px-3 py-1.5 rounded transition-colors"
-                    >
+                      className="text-xs bg-blue-600/20 hover:bg-blue-600/40 text-blue-300 border border-blue-500/30 px-3 py-1.5 rounded transition-colors">
                       DECRYPT
                     </button>
-                    {/* DISTRIBUTE button — ADMIN/SUPERADMIN only */}
                     {isAdminOrSuper && (
-                      <button
-                        onClick={() => setDistributeDoc(doc)}
-                        className="text-xs bg-[#1e3a5f] hover:bg-teal-600 text-white px-3 py-1.5 rounded transition-colors"
-                      >
+                      <button onClick={() => setDistributeDoc(doc)}
+                        className="text-xs bg-[#1e3a5f] hover:bg-teal-600 text-white px-3 py-1.5 rounded transition-colors">
                         DISTRIBUTE
                       </button>
                     )}
