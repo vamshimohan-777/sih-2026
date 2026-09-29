@@ -8,7 +8,6 @@
 [![DLT Consensus](https://img.shields.io/badge/Consensus-4--Node%20PBFT%20Blockchain-purple.svg)]()
 [![Air-Gapped](https://img.shields.io/badge/Environment-100%25%20Air--Gapped%20Offline-emerald.svg)]()
 [![Watermark PSNR](https://img.shields.io/badge/Watermark%20PSNR->44.5%20dB%20(Invisible)-brightgreen.svg)]()
-[![License](https://img.shields.io/badge/License-MIT-blue.svg)]()
 
 ---
 
@@ -171,7 +170,3 @@ AEGISTRACE is built in alignment with:
 * **Atmanirbhar Bharat:** 100% indigenous architecture without reliance on proprietary foreign cybersecurity software.
 * **Air-Gapped Sovereign Readiness:** Purpose-built for isolated military commands, DRDO laboratories, and intelligence divisions.
 
----
-
-## 📄 License
-This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
