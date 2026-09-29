@@ -141,13 +141,13 @@ function DistributeResult({ result, onClose }) {
       <div>
         <p className="text-xs text-slate-500 font-mono uppercase mb-2">Cryptographic Execution Log</p>
         <div className="bg-[#05080f] border border-[#1e3a5f] rounded-lg p-3 space-y-2 max-h-52 overflow-y-auto font-mono text-xs">
-          {visibleSteps.map((step, i) => (
-            <div key={i} className="space-y-0.5 animate-[fadeIn_0.3s_ease-in]">
+          {visibleSteps.filter(step => step != null && typeof step === 'object').map((step, i) => (
+            <div key={i} className="space-y-0.5">
               <div className="flex items-center gap-2">
-                <span className="text-slate-600">[{String(step.step).padStart(2, '0')}]</span>
-                <span className="text-teal-400 font-semibold">{step.title}</span>
+                <span className="text-slate-600">[{String(step.step != null ? step.step : i + 1).padStart(2, '0')}]</span>
+                <span className="text-teal-400 font-semibold">{step.title || 'Processing'}</span>
               </div>
-              <div className="pl-8 text-slate-500">{step.tech}</div>
+              {step.tech && <div className="pl-8 text-slate-500">{step.tech}</div>}
               {step.output_preview && (
                 <div className="pl-8 text-green-400/80 break-all">&gt; {step.output_preview}</div>
               )}
@@ -155,13 +155,13 @@ function DistributeResult({ result, onClose }) {
           ))}
           {!done && (
             <div className="flex items-center gap-1 text-teal-500">
-              <span className="animate-pulse">▋</span>
+              <span className="animate-pulse font-bold">|</span>
               <span className="text-slate-600">processing...</span>
             </div>
           )}
           {done && (
-            <div className="text-green-400 mt-1">
-              ✓ All cryptographic operations complete. Package committed to DB.
+            <div className="text-green-400 mt-1 font-mono">
+              [DONE] All cryptographic operations complete.
             </div>
           )}
         </div>

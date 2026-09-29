@@ -10,7 +10,6 @@ import json
 import base64
 import hashlib
 import numpy as np
-import pywt
 import cv2
 from PIL import Image
 from typing import Dict, Tuple, Optional, Any, List
@@ -202,13 +201,27 @@ class ForensicWatermarkEngine:
             wm_id = reg.get("watermark_id")
             recipient_id = reg.get("recipient_id")
 
-            ref_pattern = self._generate_spread_pattern(wm_id, (h, w))
+            # Use stored dimensions if available, else use candidate dims
+            ref_h = reg.get("image_height", h)
+            ref_w = reg.get("image_width", w)
+
+            # Resize candidate Y to match the reference watermark's native size
+            if ref_h != h or ref_w != w:
+                Y_resized = cv2.resize(Y_rect, (ref_w, ref_h), interpolation=cv2.INTER_CUBIC)
+                blurred_resized = cv2.GaussianBlur(Y_resized, (5, 5), 1.2)
+                residual_use = Y_resized - blurred_resized
+                norm_res_use = np.linalg.norm(residual_use)
+            else:
+                residual_use = residual
+                norm_res_use = norm_res
+
+            ref_pattern = self._generate_spread_pattern(wm_id, (ref_h, ref_w))
             ref_blurred = cv2.GaussianBlur(ref_pattern, (5, 5), 1.2)
             ref_residual = ref_pattern - ref_blurred
             norm_ref = np.linalg.norm(ref_residual)
 
-            if norm_res > 0 and norm_ref > 0:
-                corr = float(np.sum(residual * ref_residual) / (norm_res * norm_ref))
+            if norm_res_use > 0 and norm_ref > 0:
+                corr = float(np.sum(residual_use * ref_residual) / (norm_res_use * norm_ref))
             else:
                 corr = 0.0
 
@@ -237,12 +250,11 @@ class ForensicWatermarkEngine:
             z_score = float((max_correlation - mean_noise) / std_noise)
         else:
             mean_noise = 0.0
-            z_score = 10.0 if max_correlation > 0.005 else 0.0
+            z_score = 10.0 if max_correlation > 0.001 else 0.0
 
-        # Decision threshold: correlation significantly above random noise floor
-        # Or positive peak with Z-score > 2.0
-        is_attributed = (max_correlation > 0.003 and z_score > 2.0) or (max_correlation > 0.015)
-        confidence = float(np.clip(max(max_correlation * 300.0, min(z_score * 12.0, 99.8)), 0.0, 99.9))
+        # Attribution: positive peak significantly above noise floor
+        is_attributed = (max_correlation > 0.001 and z_score > 1.5) or (max_correlation > 0.008)
+        confidence = float(np.clip(max(max_correlation * 400.0, min(z_score * 15.0, 99.8)), 0.0, 99.9))
 
         return {
             "attributed": is_attributed,
